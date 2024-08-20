@@ -79,18 +79,29 @@ def solve(G, args, graph_name_stub):
         # parse solving time from gurobi output
         time_string_match = re.compile("in (\d+(\.\d*)) seconds").findall(gurobi_output)[0]
         apparent_solve_time = float(time_string_match[0])
-
+        
+        # import pdb; pdb.set_trace()
         if plp.LpStatus[opt_model.status] == "Optimal":
             opt_df = pd.DataFrame.from_dict(x_vars, orient="index", columns=["variable_object"])
             opt_df["solution_value"] = opt_df["variable_object"].apply(lambda item: item.varValue)
             solu = opt_df[opt_df['solution_value'] > 0].index.to_numpy()
+
         else:
             # Retrieve best (not optimal) solution
             # GUROBI specific, seems to be a bug in PuLP where varValue is None for non-optimal solutions
             solu = np.nonzero(np.array(opt_model.solverModel.X))[0]
         
+        if args.sub_opt:
+            opt_obj = wts[solu].sum()
+            availble_solu = opt_model.solverModel.SolCount
+            opt_model.solverModel.Params.SolutionNumber = availble_solu -1
+            solu_label = np.array(opt_model.solverModel.Xn)
+            solu = np.nonzero(solu_label)[0]
+            solu_obj = opt_model.solverModel.PoolObjVal
+            print("opt_obj:", opt_obj, "solu_obj:", solu_obj)
+        
         end_time = time.monotonic()
-
+        
         return solu, wts[solu].sum(), plp.LpStatus[opt_model.status], end_time - start_time, apparent_solve_time
 
     else:
@@ -158,6 +169,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--time_limit", type=int, nargs="?", action="store", default=120, help="Time limit in seconds")
     parser.add_argument("--weighted", action="store_true", default=False, help="Whether input is weighted or unweighted.")
+    parser.add_argument("--sub_opt", action="store_true", default=False, help="whether generate suboptimal labels")
     parser.add_argument("--num_threads", type=int, nargs="?", action="store", default=8, help="Maximum number of threads to use.")
     parser.add_argument("--quadratic", action="store_true", default=False, help="Whether a quadratic program should be used instead of linear.")
     parser.add_argument("--write_mps", action="store_true", default=False, help="Instead of solving, write mps output (e.g., for tuning).")

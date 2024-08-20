@@ -60,6 +60,8 @@ class Gurobi(MWISSolver):
         weighted = "weighted" in parameters.keys()
         quadratic = "quadratic" in parameters.keys()
         write_mps = "write_mps" in parameters.keys()
+        #solution number
+        subopt_flag = "SubOptimal" in parameters.keys()
 
 
         cache_directory = solve_data_path / "preprocessed" / str(self)
@@ -85,6 +87,9 @@ class Gurobi(MWISSolver):
 
         if write_mps:
             arguments += ["--write_mps"]
+        
+        if subopt_flag:
+            arguments += ["--sub_opt"]
 
         if "prm_file" in parameters.keys():
             arguments += ["--prm_file", parameters["prm_file"]]

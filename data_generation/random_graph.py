@@ -8,6 +8,10 @@ import subprocess
 import os
 from logzero import logger
 from utils import run_command_with_live_output
+from tqdm import tqdm   
+from multiprocessing import Pool
+from functools import partial
+import numpy as np
 
 class GraphSampler(ABC):
     @abstractmethod
@@ -121,24 +125,50 @@ class RandomGraphGenerator(DataGenerator):
         self.num_graphs = num_graphs
         self.output_path = output_path
         self.graph_sampler = graph_sampler
-
-    def generate(self, gen_labels = False, weighted = False):
-        for i in range(self.num_graphs):
+    
+    def generate_mis(self, idx_chunk, subopt_flag, label, weight, solver, base_seed):
+        indices, worker_id = idx_chunk
+        seed = base_seed * worker_id
+        np.random.seed(seed)
+        random.seed(seed)
+    
+        for i in tqdm(indices):
             stub = f"{self.graph_sampler}_{i}"
             G = self.graph_sampler.generate_graph()
 
-            if weighted:
-                weight_mapping = { vertex: int(weight) for vertex, weight in zip(G.nodes, self.random_weight(G.number_of_nodes(), sigma=30, mu=100)) }
+            if weight:
+                weight_mapping = { vertex: int(weight) for vertex, weight in zip(G.nodes, self.random_weight(G.number_of_nodes())) }
                 nx.set_node_attributes(G, values = weight_mapping, name='weight')
 
-            if gen_labels:
-                mis, status = self._call_gurobi_solver(G, weighted=weighted)
-                label_mapping = { vertex: int(vertex in mis) for vertex in G.nodes }
-                nx.set_node_attributes(G, values = label_mapping, name='label' if status == "Optimal" else 'nonoptimal_label')
-
-                if status != "Optimal":
-                    logger.warn(f"Graph {i} has non-optimal labels (mis size = {len(mis)})!")
-
-            output_file = self.output_path / (f"{stub}{'.non-optimal' if gen_labels and status != 'Optimal' else ''}.gpickle")
+            if label:
+                if solver == 'both':
+                    mis_g, status, obj_g = self._call_gurobi_solver(G, weighted=weight)
+                    mis_k, status_k, obj_k = self._call_kamis_solver(G, weighted=weight)
+                    print(f"objective value: gurobi {obj_g}, kamis {obj_k}")
+                else:
+                    mis, status, obj = self._call_gurobi_solver(G, weighted=weight, pid=worker_id, subopt_flag=subopt_flag) if solver == 'gurobi'\
+                                        else self._call_kamis_solver(G, weighted=weight, pid=worker_id)
+                    label_mapping = { vertex: int(vertex in mis) for vertex in G.nodes }
+                    nx.set_node_attributes(G, values = label_mapping, name='label' if status == "Optimal" else 'nonoptimal_label')
+                    G.graph["objective"] = obj
+                
+                # if status != "Optimal":
+                #     logger.warn(f"Graph {i} has non-optimal labels (mis size = {len(mis)})!")
+                    
+            output_file = self.output_path / (f"{stub}{'.non-optimal' if label and status != 'Optimal' else ''}.gpickle")
             with open(output_file, "wb") as f:
                 pickle.dump(G, f, pickle.HIGHEST_PROTOCOL)
+
+    
+    def generate(self, subopt = False, gen_labels = False, weighted = False, label_solver = "gurobi", num_workers = 4, seed = 0):
+        graph_idx_chunk = np.array_split(range(self.num_graphs), num_workers)
+        graph_idx_chunk = zip(graph_idx_chunk, range(1, num_workers+1))
+        generate_mis = partial(self.generate_mis, subopt_flag=subopt, label=gen_labels, weight=weighted, solver=label_solver, base_seed=seed)
+        with Pool(num_workers) as p:
+            p.map(generate_mis, graph_idx_chunk)
+
+
+      
+ 
+        
+        

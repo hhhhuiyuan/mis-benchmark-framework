@@ -103,11 +103,11 @@ class KaMIS(MWISSolver):
 
             logger.debug(f"Calling {executable} with arguments {arguments}.")
             start_time = time.monotonic()
-            #out = subprocess.run(executable=executable, args=arguments, capture_output=True, text=True)
-            #stdout = out.stdout
-            _, lines = run_command_with_live_output([executable] + arguments, capture_output=True)
+            #debug
+            res, lines = run_command_with_live_output([executable] + arguments, capture_output=True)
             solve_time = time.monotonic() - start_time
-            
+            ######
+
             results[graph_path.stem] = {"total_time": solve_time}
             with open(results_filename, "r") as f:
                 vertices = list(map(int, f.read().replace('\n','')))
