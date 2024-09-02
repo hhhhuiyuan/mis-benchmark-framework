@@ -6,7 +6,7 @@ from _hashlib import HASH as Hash
 from pathlib import Path
 
 def run_command_with_live_output(command, shell=False, capture_output=False):
-    if not capture_output:                                                                                                                                                            
+    if not capture_output:                                                                                                                                                       
         result = subprocess.run(command, shell=shell, stdout=sys.stdout, stderr=sys.stderr, text=True)
         return result, None
     else:

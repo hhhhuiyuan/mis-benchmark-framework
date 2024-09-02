@@ -61,7 +61,7 @@ class Gurobi(MWISSolver):
         quadratic = "quadratic" in parameters.keys()
         write_mps = "write_mps" in parameters.keys()
         #solution number
-        subopt_flag = "SubOptimal" in parameters.keys()
+        subopt_flag = parameters["SubOptimal"]
 
 
         cache_directory = solve_data_path / "preprocessed" / str(self)

@@ -13,8 +13,8 @@ class DataGenerator(ABC):
     def _call_gurobi_solver(self, G, timeout=30, weighted=False, pid=None, subopt_flag=False):
         if self.output_path is None:
             raise ValueError("This function can only be called if an output path is set!")
+        
         # create temp directories
-        #  
         if pid is None:
             tmp_input_folder = self.output_path / "gurobi_input"
             tmp_output_folder = self.output_path / "gurobi_output"
@@ -66,8 +66,12 @@ class DataGenerator(ABC):
             raise ValueError("This function can only be called if an output path is set!")
 
         # create temp directories
-        tmp_input_folder = self.output_path / "kamis_input"
-        tmp_output_folder = self.output_path / "kamis_output"
+        if pid is None:
+            tmp_input_folder = self.output_path / "kamis_input"
+            tmp_output_folder = self.output_path / "kamis_output"
+        else:
+            tmp_input_folder = self.output_path / f"kamis_input_{pid}"
+            tmp_output_folder = self.output_path / f"kamis_output_{pid}"
 
         if tmp_input_folder.exists() and tmp_input_folder.is_dir():
             shutil.rmtree(tmp_input_folder)

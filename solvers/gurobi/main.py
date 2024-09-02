@@ -80,7 +80,6 @@ def solve(G, args, graph_name_stub):
         time_string_match = re.compile("in (\d+(\.\d*)) seconds").findall(gurobi_output)[0]
         apparent_solve_time = float(time_string_match[0])
         
-        # import pdb; pdb.set_trace()
         if plp.LpStatus[opt_model.status] == "Optimal":
             opt_df = pd.DataFrame.from_dict(x_vars, orient="index", columns=["variable_object"])
             opt_df["solution_value"] = opt_df["variable_object"].apply(lambda item: item.varValue)
