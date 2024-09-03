@@ -321,6 +321,7 @@ if __name__ == "__main__":
     data_gen_parser.add_argument("--weighted", action="store_true", default=False, help="If enabled, generate random vertex weights.")
     data_gen_parser.add_argument("--seed", type=int, default=1023, help="Set seed for generating weighted instances")
     data_gen_parser.add_argument("--num_workers", type=int, default=4, help="Number of workers in generateing graphs")
+    data_gen_parser.add_argument("--time_limit", type=int, nargs="?", action="store", default=30, help="Time limit in seconds")
     
     data_gen_parser.add_argument("--limit_rw_graphs", type=int, help="[For type = realworld] How many graphs to sample from downloaded realworld datasets") 
     data_gen_parser.add_argument("--model", type=str, help="[For type = random] Which random graph model should be used", choices=["er", "ba", "hk", "ws", "hrg"], default="er")

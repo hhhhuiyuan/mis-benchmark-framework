@@ -80,6 +80,6 @@ class SATGraphDataGenerator(DataGenerator):
         with open(output_file, "wb") as f:
             pickle.dump(G, f, pickle.HIGHEST_PROTOCOL)
 
-    def generate(self, gen_labels = False,  weighted = False, solver = "kamis"):
+    def generate(self, gen_labels = False,  weighted = False, label_solver = "kamis"):
         for f in tqdm(self.input_path.rglob("*.cnf")):
-            self._build_graph(f, self.output_path / (f.stem + ".gpickle"), gen_labels, weighted, solver)
+            self._build_graph(f, self.output_path / (f.stem + ".gpickle"), gen_labels, weighted, label_solver)
