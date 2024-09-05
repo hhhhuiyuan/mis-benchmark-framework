@@ -16,9 +16,9 @@ class SATGraphDataGenerator(DataGenerator):
     def _build_graph(self, cnf_file, output_file, gen_labels, weighted, solver):
         cnf = CNF(cnf_file)
         nv = cnf.nv
-        # clauses = list(filter(lambda x: x, cnf.clauses))
+        clauses = list(filter(lambda x: x, cnf.clauses))
         # pick the first 100 clauses
-        clauses = cnf.clauses[:100]
+        # clauses = cnf.clauses[:100]
         
         ind = { k:[] for k in np.concatenate([np.arange(1, nv+1), -np.arange(1, nv+1)]) }
         edges = []
@@ -52,26 +52,11 @@ class SATGraphDataGenerator(DataGenerator):
             if not weighted:
                 mis_uw, _, _ = self._call_gurobi_solver(G) if solver == 'gurobi'\
                             else self._call_kamis_solver(G)
-                # mis_uw_g, _ = self._call_gurobi_solver(G)
-                # mis_uw_k, _ = self._call_kamis_solver(G)
-                # print(mis_uw_g)
-                # print(mis_uw_k)
                 label_mapping = { vertex: int(vertex in mis_uw) for vertex in G.nodes }
                 nx.set_node_attributes(G, values = label_mapping, name='label')
             else:
                 mis_w, _, obj = self._call_gurobi_solver(G, weighted=True) if solver == 'gurobi'\
                             else self._call_kamis_solver(G, weighted=True)
-                # mis_w_g, _ = self._call_gurobi_solver(G, weighted=True)
-                # mis_w_k, _ = self._call_kamis_solver(G, weighted=True)
-                # print(mis_w_g)
-                # print(mis_w_k)
-                
-                # obj_g, obj_k = 0, 0
-                # for vertex in mis_w_g:
-                #     obj_g += weight_mapping[vertex]
-                # for vertex in mis_w_k:
-                #     obj_k += weight_mapping[vertex]
-                # print(f"gurobi_obj: {obj_g}, kamis_obj: {obj_k}")
                 label_mapping = { vertex: int(vertex in mis_w) for vertex in G.nodes }
                 nx.set_node_attributes(G, values = label_mapping, name='label')
                 G.graph['objective'] = obj
