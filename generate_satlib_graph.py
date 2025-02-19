@@ -8,6 +8,7 @@ from logzero import logger
 from filelock import FileLock
 import numpy as np
 import random
+import time
 
 # globals for release in the end
 cuda_devices = []
@@ -225,7 +226,12 @@ def _data_generation(args):
         else:
             raise ValueError(f"Unknown random graph model {args.model}")
         gen = RandomGraphGenerator(args.output_folder, graph_generator, num_graphs=args.num_graphs)
+        
+        start_time = time.time()
         gen.generate(subopt = args.sub_opt, gen_labels=args.gen_labels, weighted=args.weighted, label_solver=args.label_solver, num_workers=args.num_workers, seed=args.seed)
+        end_time = time.time() - start_time
+        
+        print(f"Total time: {end_time / 60:.1f}m")
     
     elif args.type == "realworld":
     #     from data_generation.realworld import RealWorldGraphGenerator

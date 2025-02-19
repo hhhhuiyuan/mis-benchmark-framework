@@ -5,6 +5,7 @@ import glob
 import networkx as nx
 import os
 from tqdm import tqdm
+import time
 
 def findMIS(AD, priority, weight):
     # Check if the adjacency matrix is square
@@ -55,14 +56,15 @@ def findMIS(AD, priority, weight):
     return x
 
 
-mis_folder = '../data/shared/huiyuan/mis100/weighted_ER_train_1234/*gpickle'
-new_folder = '../data/shared/huiyuan/mis100/weighted_ER_subbopt_train_1234/' 
+mis_folder = '../data/shared/huiyuan/mis100/weighted_ER_val_1023/*gpickle'
+new_folder = '../data/shared/huiyuan/mis100/weighted_ER_val_subopt/' 
 os.makedirs(new_folder, exist_ok=True)
 
 mis_files = glob.glob(mis_folder)
 gap = []
 opt = []
 
+start_time = time.time()
 for mis_file in tqdm(mis_files):
     with open(mis_file , "rb") as f:
         graph = pickle.load(f)
@@ -92,12 +94,15 @@ for mis_file in tqdm(mis_files):
     opt.append(opt_obj)
     
     graph.graph["objective"]= subopt_obj
-    subopt_label = {i:result[i] for i in range(num_nodes)}   
-    nx.set_node_attributes(graph, subopt_label, 'label')
+    #subopt_label = {i:result[i] for i in range(num_nodes)}   
+    #nx.set_node_attributes(graph, subopt_label, 'label')
     
-    new_filename = f"subopt_{os.path.basename(mis_file)}"
-    nx.write_gpickle(graph, os.path.join(new_folder, new_filename))
-    
-print(f"Average gap: {np.mean(gap)}, Average opt: {np.mean(opt)}")
+    #new_filename = f"subopt_{os.path.basename(mis_file)}"
+    #nx.write_gpickle(graph, os.path.join(new_folder, new_filename))
+
+end_time = time.time() - start_time    
+
+print(f"Average gap: {np.mean(gap)}, Average opt: {np.mean(opt)}, percentage gap: {np.mean(gap)/np.mean(opt)*100}%")
+print(f"Total time: {end_time / 60:.1f}m")
     
     
